@@ -6,7 +6,7 @@ const cors = require("cors");
 const db = require("./db")
 // db.authenticate().then(() => console.log("DB connected")).catch(console.error)
 // TODO: Workshop Part 2: import your Book model from ./models/Book once it's defined.
-const Book = require("./models/book")
+const { Book, Review } = require("./models")
 
 const app = express();
 const PORT = 8080;
@@ -44,7 +44,9 @@ app.get("/api/books", async (request, response, next) => {
 app.get("/api/books/:id", async (request, response, next) => {
   try {
     const id = Number(request.params.id); // request.params.id is always a string — Number() makes it comparable
-    const book = await Book.findByPk(id)
+    const book = await Book.findByPk(id, {
+      include: Review
+    })
 
     if (!book) {
       return response.sendStatus(404);
@@ -69,6 +71,21 @@ app.post("/api/books", async (request, response, next) => {
   }
 });
 
+app.post("/api/books/:bookId/reviews" , async (req, res, next) => {
+  try {
+    const bookId = Number(req.params.bookId)
+
+    const newReview = await Review.create({
+      reviewer: req.body.reviewer,
+      rating: req.body.rating,
+      comment: req.body.comment,
+      bookId: bookId
+    })
+    res.status(201).json(newReview)
+  } catch (err) {
+    next(err)
+  }
+})
 // Part 6: PATCH an existing book — only changes the fields that were sent
 // TODO: Workshop: find the book the same Sequelize way as the GET-one route above,
 // then call the instance method that updates it in place with req.body.
